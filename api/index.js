@@ -1,9 +1,11 @@
 // api/index.js
-const express = require('express');
+
 const jwt = require('jsonwebtoken');
-const { getUserById } = require('../db');
+const { getUserById, updatePost, getPostById  } = require('../db');
 const { JWT_SECRET } = process.env;
+const express = require('express');
 const apiRouter = express.Router();
+
 
 apiRouter.use(async (req, res, next) => {
   const prefix = 'Bearer ';
@@ -50,8 +52,8 @@ apiRouter.use('/posts', postsRouter);
 const tagsRouter = require('./tags');
 apiRouter.use('/tags', tagsRouter);
 
-// apiRouter.use((error, req, res, next) => {
-//     res.send(error);
-//   });
+apiRouter.use((error, req, res, next) => {
+  res.send(error);
+});
 
 module.exports = apiRouter;

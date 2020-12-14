@@ -1,4 +1,5 @@
 const { Client } = require('pg') // imports the pg module
+require('dotenv').config();
 
 const client = new Client(process.env.DATABASE_URL || 'postgres://localhost:5432/juicebox-dev');
 
@@ -208,6 +209,14 @@ async function getPostById(postId) {
       WHERE id=$1;
     `, [postId]);
 
+    if (!post) {
+      throw {
+        name: "PostNotFoundError",
+        message: "Could not find a post with that postId"
+      };
+    }
+    
+
     const { rows: tags } = await client.query(`
       SELECT tags.*
       FROM tags
@@ -361,5 +370,6 @@ module.exports = {
   getAllTags,
   createPostTag,
   addTagsToPost,
-  getUserByUsername
+  getUserByUsername,
+  createPostTag
 }

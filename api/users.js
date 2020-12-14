@@ -1,32 +1,32 @@
 const express = require('express');
 const usersRouter = express.Router();
 const jwt = require('jsonwebtoken');
-const { getAllUsers, getUserByUsername, createUser } = require('../db');
+
+const { getAllUsers, getUserByUsername, createUser, getUserById, updateUser, client } = require('../db');
+const { requireUser } = require('./utils')
 
 usersRouter.use((req, res, next) => {
-  console.log('A request is being made to /users');
+  console.log("A request is being made to /users");
 
-  next();
+  next(); // THIS IS DIFFERENT
 });
-// Pickup
-// GET localhost:3000/api/users/
+
 usersRouter.get('/', async (req, res) => {
   const users = await getAllUsers();
 
   res.send({
-    users,
+    users
   });
 });
-// Delivery
-// POST localhost:3000/api/users/login
+
 usersRouter.post('/login', async (req, res, next) => {
   const { username, password } = req.body;
 
   // request must have both
   if (!username || !password) {
     next({
-      name: 'MissingCredentialsError',
-      message: 'Please supply both a username and password',
+      name: "MissingCredentialsError",
+      message: "Please supply both a username and password"
     });
   }
 
@@ -36,18 +36,20 @@ usersRouter.post('/login', async (req, res, next) => {
     if (user && user.password == password) {
       // create token & return to user
 
-      res.send({ message: "you're logged in!" });
+      const token = jwt.sign({id: user.id, username: username}, process.env,JWT_SECRET);
+      res.send({ message: "you did it, AppleJack! you're logged in!", token : token });
     } else {
-      next({
-        name: 'IncorrectCredentialsError',
-        message: 'Username or password is incorrect',
+      next({ 
+        name: 'IncorrectCredentialsError', 
+        message: 'Username or password is incorrect'
       });
     }
-  } catch (error) {
+  } catch(error) {
     console.log(error);
     next(error);
   }
 });
+
 usersRouter.post('/register', async (req, res, next) => {
   const { username, password, name, location } = req.body;
 
@@ -83,4 +85,31 @@ usersRouter.post('/register', async (req, res, next) => {
     next({ name, message })
   } 
 });
+
+usersRouter.patch('/:userId', requireUser, async (req, res, next) => {
+
+  const { userId } = req.params;
+
+  try {
+    const user = await getUserById(userId)
+     if (!user) {
+       next({
+         name: 'UserDoesNotExist',
+         message: 'No user exists with that ID.'
+       });
+     }
+     if (req.user.id == userId) {
+        const updatedUser = await updateUser( userId, { active : true } );
+        res.send({ user : updatedUser });
+    } else {
+    next({
+      name: 'UnauthorizedUser',
+      message: 'You cannot activate an account that is not your own.'
+    });
+    } 
+  } catch ({name, message}) {
+    next({name, message})
+    }
+});
+
 module.exports = usersRouter;
