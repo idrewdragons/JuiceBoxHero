@@ -20,9 +20,9 @@ postsRouter.get('/', async (req, res) => {
   
       res.send({
         posts
-      });
-    } catch ({ name, message }) {
-      throw error
+      })
+    } catch (error) {
+      throw error;
     }
   });
 
